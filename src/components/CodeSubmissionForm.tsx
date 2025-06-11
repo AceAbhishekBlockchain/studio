@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Send, FileText, LinkIcon, SearchCode, Cpu } from 'lucide-react';
+import { Loader2, Send, FileText, LinkIcon, SearchCode } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,16 +18,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const formSchemaDefinition = {
-  inputType: z.enum(['url', 'file', 'address', 'techQuery']),
+  inputType: z.enum(['url', 'file', 'address']),
   contractUrl: z.string().optional(),
   contractFile: (typeof window === 'undefined' ? z.any() : z.instanceof(FileList)).optional(),
   contractAddress: z.string().optional(),
-  techQueryCode: z.string().optional(),
 };
 
 const formSchema = z.object(formSchemaDefinition).superRefine((data, ctx) => {
@@ -52,53 +50,34 @@ const formSchema = z.object(formSchemaDefinition).superRefine((data, ctx) => {
     } else if (!/^(0x)?[0-9a-fA-F]{40}$/.test(data.contractAddress)) {
        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid contract address format. (e.g., 0x...).', path: ['contractAddress'] });
     }
-  } else if (data.inputType === 'techQuery') {
-    if (!data.techQueryCode || data.techQueryCode.trim().length < 20) { 
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please paste sufficient smart contract code (min 20 characters).', path: ['techQueryCode'] });
-    }
   }
 });
 
 export type CodeSubmissionFormValues = z.infer<typeof formSchema>;
 
 type CodeSubmissionFormProps = {
-  formMode: 'vulnerability' | 'technology';
   onSubmit: (values: CodeSubmissionFormValues) => void;
   isLoading: boolean;
 };
 
-export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmissionFormProps) {
-  const initialInputType = formMode === 'technology' ? 'techQuery' : 'url';
-  
+export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormProps) {
   const form = useForm<CodeSubmissionFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      inputType: initialInputType,
+      inputType: 'url',
       contractUrl: '',
       contractFile: undefined,
       contractAddress: '',
-      techQueryCode: '',
     },
   });
 
-  // Effect to set inputType if mode changes, though typically mode is fixed per instance
-  React.useEffect(() => {
-    form.setValue('inputType', formMode === 'technology' ? 'techQuery' : form.getValues('inputType') || 'url');
-  }, [formMode, form]);
-
   const selectedInputType = form.watch('inputType');
-  const cardTitle = formMode === 'vulnerability' ? 'Submit Smart Contract for Vulnerability Audit' : 'Submit Smart Contract for Technology Analysis';
-  const submitButtonText = formMode === 'vulnerability' ? 'Analyze Contract for Vulnerabilities' : 'Analyze Technologies';
+  const cardTitle = 'Submit Smart Contract for Vulnerability Audit';
+  const submitButtonText = 'Analyze Contract for Vulnerabilities';
   
   const handleSubmit = (data: CodeSubmissionFormValues) => {
-    // Ensure inputType is correctly set for technology mode before submitting
-    if (formMode === 'technology') {
-      onSubmit({ ...data, inputType: 'techQuery' });
-    } else {
-      onSubmit(data);
-    }
+    onSubmit(data);
   };
-
 
   return (
     <Card className="shadow-lg">
@@ -108,53 +87,51 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {formMode === 'vulnerability' && (
-              <FormField
-                control={form.control}
-                name="inputType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Input Method for Vulnerability Audit</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                        disabled={isLoading}
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="url" id="url-vuln" />
-                          </FormControl>
-                          <FormLabel htmlFor="url-vuln" className="font-normal flex items-center">
-                            <LinkIcon className="mr-2 h-4 w-4 text-muted-foreground" /> URL
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="file" id="file-vuln" />
-                          </FormControl>
-                          <FormLabel htmlFor="file-vuln" className="font-normal flex items-center">
-                            <FileText className="mr-2 h-4 w-4 text-muted-foreground" /> File Upload
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="address" id="address-vuln" />
-                          </FormControl>
-                          <FormLabel htmlFor="address-vuln" className="font-normal flex items-center">
-                             <SearchCode className="mr-2 h-4 w-4 text-muted-foreground" /> Contract Address
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="inputType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Input Method for Vulnerability Audit</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                      disabled={isLoading}
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="url" id="url-vuln" />
+                        </FormControl>
+                        <FormLabel htmlFor="url-vuln" className="font-normal flex items-center">
+                          <LinkIcon className="mr-2 h-4 w-4 text-muted-foreground" /> URL
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="file" id="file-vuln" />
+                        </FormControl>
+                        <FormLabel htmlFor="file-vuln" className="font-normal flex items-center">
+                          <FileText className="mr-2 h-4 w-4 text-muted-foreground" /> File Upload
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="address" id="address-vuln" />
+                        </FormControl>
+                        <FormLabel htmlFor="address-vuln" className="font-normal flex items-center">
+                            <SearchCode className="mr-2 h-4 w-4 text-muted-foreground" /> Contract Address
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {formMode === 'vulnerability' && selectedInputType === 'url' && (
+            {selectedInputType === 'url' && (
               <FormField
                 control={form.control}
                 name="contractUrl"
@@ -178,7 +155,7 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
               />
             )}
 
-            {formMode === 'vulnerability' && selectedInputType === 'file' && (
+            {selectedInputType === 'file' && (
               <FormField
                 control={form.control}
                 name="contractFile"
@@ -204,7 +181,7 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
               />
             )}
 
-            {formMode === 'vulnerability' && selectedInputType === 'address' && (
+            {selectedInputType === 'address' && (
               <FormField
                 control={form.control}
                 name="contractAddress"
@@ -228,31 +205,6 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
               />
             )}
             
-            {formMode === 'technology' && (
-              <FormField
-                control={form.control}
-                name="techQueryCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Paste Smart Contract Code for Technology Analysis</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Paste your smart contract code here..."
-                        className="min-h-[200px] font-code text-sm"
-                        {...field}
-                        value={field.value ?? ""}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      The AI will analyze this code to identify technologies, languages, patterns, and their usage.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
               {isLoading ? (
                 <>
@@ -261,7 +213,7 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
                 </>
               ) : (
                 <>
-                  {formMode === 'technology' ? <Cpu className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
+                  <Send className="mr-2 h-4 w-4" />
                   {submitButtonText}
                 </>
               )}
@@ -272,4 +224,3 @@ export function CodeSubmissionForm({ formMode, onSubmit, isLoading }: CodeSubmis
     </Card>
   );
 }
-
