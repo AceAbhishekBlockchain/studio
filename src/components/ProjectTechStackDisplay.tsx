@@ -60,9 +60,9 @@ const technologies = [
     icon: <Server className="h-6 w-6 text-gray-500" />
   },
   {
-    name: 'MongoDB Atlas',
-    description: 'A fully managed cloud database service. Integrated to persist smart contract vulnerability analysis reports.',
-    role: 'Data storage and persistence. Used to save smart contract vulnerability analysis reports after successful analysis.',
+    name: 'MongoDB Atlas (with Search and Vector Search)',
+    description: 'A fully managed cloud database service with powerful search and vector search capabilities. Integrated to persist smart contract vulnerability analysis reports.',
+    role: 'Data storage, persistence, and enhanced search for analysis reports.',
     icon: <Database className="h-6 w-6 text-green-600" />
   },
   {
