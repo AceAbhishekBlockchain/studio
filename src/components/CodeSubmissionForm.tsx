@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Send, FileText, LinkIcon, SearchCode } from 'lucide-react';
+import { Loader2, Send, FileText, LinkIcon, SearchCode, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Updated Zod schema for the form
 const formSchema = z.object({
@@ -172,27 +173,38 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
             )}
 
             {selectedInputType === 'address' && (
-              <FormField
-                control={form.control}
-                name="contractAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contract Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="0x123..."
-                        {...field}
-                        value={field.value ?? ""}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Enter the smart contract address (e.g., Ethereum mainnet). Code fetching is currently illustrative.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="contractAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contract Address</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="0x123abc..."
+                          {...field}
+                          value={field.value ?? ""}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the Ethereum mainnet address (e.g., 0x...).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Alert variant="default" className="mt-4">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle className="font-semibold">Illustrative Feature</AlertTitle>
+                  <AlertDescription>
+                    Analysis via contract address is currently for demonstration purposes.
+                    Live code fetching and full analysis for addresses will be implemented in a future update.
+                    Submitting an address will currently show the UI flow.
+                  </AlertDescription>
+                </Alert>
+              </>
             )}
             
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
