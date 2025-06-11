@@ -62,13 +62,13 @@ const technologies = [
   {
     name: 'MongoDB Atlas',
     description: 'A fully managed cloud database service. Integrated to persist smart contract vulnerability analysis reports.',
-    role: 'Data storage and persistence. Used to save smart contract vulnerability analysis reports.',
+    role: 'Data storage and persistence. Used to save smart contract vulnerability analysis reports after successful analysis.',
     icon: <Database className="h-6 w-6 text-green-600" />
   },
   {
     name: 'GitLab CI/CD',
     description: 'A continuous integration and continuous delivery/deployment platform built into GitLab.',
-    role: 'Automates the build, test, and deployment pipeline for the application (initial .gitlab-ci.yml setup).',
+    role: 'Automates the build, test, and (optionally) deployment pipeline for the application. The .gitlab-ci.yml file is configured with stages for dependency installation, building, and testing (linting, type checking). An example deployment stage for Firebase App Hosting is included and can be configured with CI/CD variables.',
     icon: <GitFork className="h-6 w-6 text-orange-600" />
   }
 ];
