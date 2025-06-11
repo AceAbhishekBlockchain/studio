@@ -4,6 +4,7 @@
 import { selectAnalysisTools, type SelectAnalysisToolsOutput } from '@/ai/flows/select-analysis-tools';
 import { generateVulnerabilityReport, type GenerateVulnerabilityReportOutput, type Vulnerability } from '@/ai/flows/generate-vulnerability-report';
 import { z } from 'zod';
+import { saveAnalysisReport } from '@/lib/mongodb'; // Import the save function
 
 export type { Vulnerability } from '@/ai/flows/generate-vulnerability-report';
 
@@ -67,37 +68,47 @@ async function fetchContractCodeFromEtherscan(address: string): Promise<string> 
 
   let sourceCode = data.result[0].SourceCode;
 
+  // Handle multi-file JSON format from Etherscan
   if (sourceCode.startsWith('{{') && sourceCode.endsWith('}}')) {
     try {
+      // Etherscan sometimes wraps the JSON in double curly braces
       const sourceCodeObject = JSON.parse(sourceCode.substring(1, sourceCode.length - 1));
       if (sourceCodeObject.sources && typeof sourceCodeObject.sources === 'object') {
+        // Standard multi-file format
         sourceCode = Object.values(sourceCodeObject.sources)
           .map((file: any) => file.content)
-          .join('\n\n// ---- Next File ----\n\n');
+          .join('\\n\\n// ---- Next File ----\\n\\n');
       } else if (typeof sourceCodeObject === 'object' && !sourceCodeObject.sources) {
+         // Sometimes the structure is just { "File1.sol": { "content": "..." } }
          sourceCode = Object.values(sourceCodeObject)
           .map((file: any) => file.content)
-          .join('\n\n// ---- Next File ----\n\n');
+          .join('\\n\\n// ---- Next File ----\\n\\n');
       }
     } catch (e) {
       console.warn(`Failed to parse multi-file source code JSON for ${address}, using raw source. Error: ${e}`);
+      // Fallback to using sourceCode as is if parsing fails
     }
   } else if (sourceCode.startsWith('{') && sourceCode.endsWith('}')) {
+    // Handle cases where it's a single JSON object, possibly with a 'sources' key
     try {
         const sourceCodeObject = JSON.parse(sourceCode);
         if (sourceCodeObject.sources && typeof sourceCodeObject.sources === 'object') {
              sourceCode = Object.values(sourceCodeObject.sources)
             .map((file: any) => file.content)
-            .join('\n\n// ---- Next File ----\n\n');
+            .join('\\n\\n// ---- Next File ----\\n\\n');
         } else if (sourceCodeObject.language === "Solidity" && typeof sourceCodeObject.sources === 'object') {
+            // Another possible structure
             sourceCode = Object.values(sourceCodeObject.sources)
                 .map((fileEntry: any) => fileEntry.content)
-                .join('\n\n// ---- Next File ----\n\n');
+                .join('\\n\\n// ---- Next File ----\\n\\n');
         }
+        // If it's a JSON but not matching known structures, it might be a single file contract wrapped in JSON - use as is.
     } catch (e) {
+        // Not a JSON, or a JSON format we don't specifically handle for multi-files - use as is.
         console.warn(`Failed to parse potential JSON source code for ${address}, using raw source. Error: ${e}`);
     }
   }
+
 
   if (!sourceCode.trim()) {
     throw new Error(`Fetched contract code is empty for address: ${address}. It might be an unverified proxy or an empty contract.`);
@@ -165,6 +176,18 @@ export async function analyzeContractAction(
     });
     if (!vulnerabilityReportOutput || !vulnerabilityReportOutput.vulnerabilities) {
         throw new Error('AI vulnerability report generation failed.');
+    }
+
+    // Save the report to MongoDB - fire and forget for now, or handle errors if critical
+    if (contractIdentifier) {
+      saveAnalysisReport(
+        contractIdentifier,
+        toolSelectionOutput.selectedTools,
+        vulnerabilityReportOutput.vulnerabilities
+      ).catch(dbError => {
+        // Log the error but don't let it break the user-facing response
+        console.error("Failed to save report to MongoDB:", dbError);
+      });
     }
     
     return { 

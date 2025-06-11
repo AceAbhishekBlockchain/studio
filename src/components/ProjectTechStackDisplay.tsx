@@ -61,15 +61,15 @@ const technologies = [
   },
   {
     name: 'MongoDB Atlas',
-    description: 'A fully managed cloud database service. Planned for persisting data such as analysis reports or user information.',
-    role: 'Data storage and persistence (initial setup complete, further integration pending).',
+    description: 'A fully managed cloud database service. Integrated to persist smart contract vulnerability analysis reports.',
+    role: 'Data storage and persistence. Used to save smart contract vulnerability analysis reports.',
     icon: <Database className="h-6 w-6 text-green-600" />
   },
   {
     name: 'GitLab CI/CD',
     description: 'A continuous integration and continuous delivery/deployment platform built into GitLab.',
     role: 'Automates the build, test, and deployment pipeline for the application (initial .gitlab-ci.yml setup).',
-    icon: <GitFork className="h-6 w-6 text-orange-600" /> // Using GitFork icon for CI/CD
+    icon: <GitFork className="h-6 w-6 text-orange-600" />
   }
 ];
 
@@ -105,7 +105,7 @@ export function ProjectTechStackDisplay() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground pt-4 border-t border-border mt-6">
-          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform. The CI/CD pipeline helps ensure code quality and automates deployments.
+          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform. The CI/CD pipeline helps ensure code quality and automates deployments. MongoDB Atlas is used for data persistence, storing analysis reports.
         </p>
       </CardContent>
     </Card>
