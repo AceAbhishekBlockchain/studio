@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { SelectAnalysisToolsOutput } from '@/ai/flows/select-analysis-tools';
@@ -6,13 +7,13 @@ import { Download } from 'lucide-react';
 
 type ReportDownloadButtonProps = {
   results: SelectAnalysisToolsOutput;
-  contractUrl: string;
+  contractIdentifier: string; // Changed from contractUrl
 };
 
-export function ReportDownloadButton({ results, contractUrl }: ReportDownloadButtonProps) {
+export function ReportDownloadButton({ results, contractIdentifier }: ReportDownloadButtonProps) {
   const handleDownload = () => {
     const reportData = {
-      contractUrl,
+      contractIdentifier, // Changed from contractUrl
       analysisTimestamp: new Date().toISOString(),
       aiSelectedTools: results.selectedTools,
       // In a real app, you'd include actual vulnerability details here

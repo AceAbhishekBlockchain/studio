@@ -1,12 +1,13 @@
+
 import type { SelectAnalysisToolsOutput } from '@/ai/flows/select-analysis-tools';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Lightbulb, PenToolIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Lightbulb, PenToolIcon } from 'lucide-react'; // Corrected icon
 import { Separator } from './ui/separator';
 
 type ResultsDashboardProps = {
   results: SelectAnalysisToolsOutput;
-  contractUrl: string;
+  contractIdentifier: string; // Changed from contractUrl
 };
 
 // Dummy vulnerability data structure
@@ -58,15 +59,22 @@ const getSeverityBadgeVariant = (severity: Vulnerability['severity']) => {
   }
 };
 
-export function ResultsDashboard({ results, contractUrl }: ResultsDashboardProps) {
+export function ResultsDashboard({ results, contractIdentifier }: ResultsDashboardProps) {
   const hasVulnerabilities = results.selectedTools.length > 0; // Simulate based on tool selection for now
+
+  // Determine if contractIdentifier is a URL to make it clickable
+  const isUrl = contractIdentifier.startsWith('http://') || contractIdentifier.startsWith('https://');
 
   return (
     <Card className="mt-8 shadow-lg animate-fadeIn">
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Audit Analysis Report</CardTitle>
         <CardDescription>
-          Results for contract at: <a href={contractUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{contractUrl}</a>
+          Results for contract: {isUrl ? (
+            <a href={contractIdentifier} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{contractIdentifier}</a>
+          ) : (
+            <span className="break-all">{contractIdentifier}</span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

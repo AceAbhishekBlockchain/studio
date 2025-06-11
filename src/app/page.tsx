@@ -1,54 +1,60 @@
+
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react'; // Changed from 'react-dom' and renamed
+import { useActionState } from 'react';
 import { z } from 'zod';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 import { Header } from '@/components/Header';
-import { CodeSubmissionForm } from '@/components/CodeSubmissionForm';
+import { CodeSubmissionForm, type CodeSubmissionFormValues } from '@/components/CodeSubmissionForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { ReportDownloadButton } from '@/components/ReportDownloadButton';
 import { analyzeContractAction, type AnalysisResult } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 
-
-const formSchema = z.object({
-  contractUrl: z.string().url(),
-});
+// Form schema is now primarily managed within CodeSubmissionForm.tsx
+// This page component doesn't need a separate formSchema for validation itself.
 
 export default function Home() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [analysisResult, setAnalysisResult] = React.useState<AnalysisResult | null>(null);
-  const [submittedUrl, setSubmittedUrl] = React.useState<string | null>(null);
+  const [submittedIdentifier, setSubmittedIdentifier] = React.useState<string | null>(null); // Renamed from submittedUrl
 
 
   const initialState: AnalysisResult | null = null;
-  // We use a local handler to manage loading state around the form action.
-  // The formState from useActionState will reflect the result of the action.
-  const [formState, formAction] = useActionState(analyzeContractAction, initialState); // Changed from useFormState
+  const [formState, formAction] = useActionState(analyzeContractAction, initialState);
 
-  const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleFormSubmit = async (values: CodeSubmissionFormValues) => {
     setIsLoading(true);
     setAnalysisResult(null); // Clear previous results
-    setSubmittedUrl(values.contractUrl);
-
-    const formData = new FormData();
-    formData.append('contractUrl', values.contractUrl);
     
-    // Directly call formAction, which is `analyzeContractAction` bound with `useActionState`
-    // This will update `formState` when the action completes.
+    const formData = new FormData();
+    formData.append('inputType', values.inputType);
+
+    let identifier: string | null = null;
+
+    if (values.inputType === 'url' && values.contractUrl) {
+      formData.append('contractUrl', values.contractUrl);
+      identifier = values.contractUrl;
+    } else if (values.inputType === 'file' && values.contractFile && values.contractFile.length > 0) {
+      formData.append('contractFile', values.contractFile[0]); // Append the File object
+      identifier = values.contractFile[0].name;
+    } else if (values.inputType === 'address' && values.contractAddress) {
+      formData.append('contractAddress', values.contractAddress);
+      identifier = values.contractAddress;
+    }
+    setSubmittedIdentifier(identifier);
+    
     await formAction(formData); 
-    // No need to call analyzeContractAction directly here, useActionState handles it.
   };
   
   React.useEffect(() => {
-    // When formState updates (after action completes), update local state
     if (formState) {
       setAnalysisResult(formState);
-      setIsLoading(false); // Action finished, stop loading
+      setIsLoading(false); 
       if (formState.success) {
         toast({
           title: "Analysis Complete",
@@ -85,15 +91,15 @@ export default function Home() {
               <AlertTitle>Analysis Error</AlertTitle>
               <AlertDescription>
                 {analysisResult.error || 'An unknown error occurred.'}
-                {analysisResult.contractUrl && <p className="mt-1 text-xs">URL: {analysisResult.contractUrl}</p>}
+                {analysisResult.contractIdentifier && <p className="mt-1 text-xs">Source: {analysisResult.contractIdentifier}</p>}
               </AlertDescription>
             </Alert>
           )}
 
-          {analysisResult?.success === true && analysisResult.data && submittedUrl && (
+          {analysisResult?.success === true && analysisResult.data && submittedIdentifier && (
             <>
-              <ResultsDashboard results={analysisResult.data} contractUrl={submittedUrl} />
-              <ReportDownloadButton results={analysisResult.data} contractUrl={submittedUrl} />
+              <ResultsDashboard results={analysisResult.data} contractIdentifier={submittedIdentifier} />
+              <ReportDownloadButton results={analysisResult.data} contractIdentifier={submittedIdentifier} />
             </>
           )}
         </div>
