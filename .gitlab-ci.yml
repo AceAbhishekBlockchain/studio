@@ -6,7 +6,7 @@ image: node:20
 stages:
   - build # For compiling the application
   - test  # For running linters, type checks, and other tests
-  # - deploy # For deploying the application (example, keep commented if not fully configured)
+  - deploy # For deploying the application
 
 # Cache dependencies to speed up subsequent pipeline runs
 cache:
@@ -61,38 +61,39 @@ test_app:
       when: never
     - when: on_success
 
-# --- Example Deployment to Firebase App Hosting ---
-# This is an example deployment stage. It's commented out by default.
+# --- Deployment to Firebase App Hosting ---
+# This deployment stage is now configured.
 # To use it:
-# 1. Uncomment the 'deploy' stage in the 'stages' list at the top.
-# 2. Uncomment this entire 'deploy_to_firebase_app_hosting' job.
-# 3. Configure Firebase authentication (e.g., using FIREBASE_TOKEN) and
-#    specify your project/backend IDs as GitLab CI/CD variables.
-#    Go to your GitLab project: Settings > CI/CD > Variables. Add:
+# 1. Ensure Firebase authentication is configured by setting the following
+#    CI/CD variables in your GitLab project (Settings > CI/CD > Variables):
 #    - FIREBASE_TOKEN (generate with `firebase login:ci`)
 #    - FIREBASE_PROJECT_ID
 #    - APP_HOSTING_BACKEND_ID
+# 2. This job is set to 'manual'. After a pipeline for the default branch succeeds,
+#    you can manually trigger this deployment from the GitLab CI/CD > Pipelines page.
+#    Change 'when: manual' to 'when: on_success' for automatic deployment on merge to default branch.
 
-# deploy_to_firebase_app_hosting:
-#   stage: deploy
-#   image: firebase/firebase-tools:latest # Use the official Firebase image for deployment tools
-#   script:
-#     - echo "Starting deployment to Firebase App Hosting..."
-#     - echo "Verifying Firebase authentication (optional step)..."
-#     - firebase projects:list # Optional: verify authentication and list accessible projects
-#     - echo "Preparing deployment artifacts..."
-#     # The source for deployment is the root directory containing build artifacts.
-#     - echo "Deploying backend ID: ${APP_HOSTING_BACKEND_ID} to project: ${FIREBASE_PROJECT_ID}..."
-#     # The following command assumes your apphosting.yaml is configured correctly
-#     # and you are deploying the backend defined there.
-#     - firebase apphosting:backends:deploy ${APP_HOSTING_BACKEND_ID} --project ${FIREBASE_PROJECT_ID} --token ${FIREBASE_TOKEN} --source .
-#     - echo "Deployment attempt finished."
-#   dependencies:
-#     - build_app # This job depends on the artifacts from the build_app job
-#   rules:
-#     # Deploy only when changes are pushed/merged to the default branch (e.g., main or master)
-#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-#       when: manual # Change to 'on_success' for automatic deployment on merge to default branch
-#       # when: on_success # Use for automatic deployment
-#     # Prevent deployment on other branches/tags unless explicitly defined
-#     - when: never
+deploy_to_firebase_app_hosting:
+  stage: deploy
+  image: firebase/firebase-tools:latest # Use the official Firebase image for deployment tools
+  script:
+    - echo "Starting deployment to Firebase App Hosting..."
+    - echo "Verifying Firebase CLI access (requires FIREBASE_TOKEN variable)..."
+    - firebase --version
+    - echo "Optional: Verifying Firebase project access (requires FIREBASE_PROJECT_ID variable)..."
+    - firebase projects:list --token ${FIREBASE_TOKEN} # Verify authentication and list accessible projects
+    - echo "Preparing deployment artifacts..."
+    # The source for deployment is the root directory containing build artifacts from the 'build_app' job.
+    - echo "Deploying backend ID: ${APP_HOSTING_BACKEND_ID} to project: ${FIREBASE_PROJECT_ID}..."
+    # The following command assumes your apphosting.yaml is configured correctly
+    # and you are deploying the backend defined there.
+    - firebase apphosting:backends:deploy ${APP_HOSTING_BACKEND_ID} --project ${FIREBASE_PROJECT_ID} --token ${FIREBASE_TOKEN} --source .
+    - echo "Deployment to Firebase App Hosting finished."
+  dependencies:
+    - build_app # This job depends on the artifacts from the build_app job
+  rules:
+    # Deploy only when changes are pushed/merged to the default branch (e.g., main or master)
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual # Change to 'on_success' for automatic deployment on merge to default branch
+    # Prevent deployment on other branches/tags unless explicitly defined
+    - when: never

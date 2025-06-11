@@ -68,7 +68,7 @@ const technologies = [
   {
     name: 'GitLab CI/CD',
     description: 'A continuous integration and continuous delivery/deployment platform built into GitLab.',
-    role: 'Automates the build, test, and (optionally) deployment pipeline for the application. The .gitlab-ci.yml file is configured with stages for dependency installation, building, and testing (linting, type checking). An example deployment stage for Firebase App Hosting is included and can be configured with CI/CD variables.',
+    role: 'Automates the build, test, and deployment pipeline. The .gitlab-ci.yml file is configured with stages for dependency installation, building, type checking, linting, and deploying to Firebase App Hosting (manual trigger, requires CI/CD variables).',
     icon: <GitFork className="h-6 w-6 text-orange-600" />
   }
 ];
@@ -105,7 +105,7 @@ export function ProjectTechStackDisplay() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground pt-4 border-t border-border mt-6">
-          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform. The CI/CD pipeline helps ensure code quality and automates deployments. MongoDB Atlas is used for data persistence, storing analysis reports.
+          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform. The CI/CD pipeline helps ensure code quality and automates deployments to Firebase App Hosting. MongoDB Atlas is used for data persistence, storing analysis reports.
         </p>
       </CardContent>
     </Card>
