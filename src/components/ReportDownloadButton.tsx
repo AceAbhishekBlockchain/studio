@@ -1,39 +1,23 @@
 
 'use client';
 
-import type { SelectAnalysisToolsOutput } from '@/ai/flows/select-analysis-tools';
+import type { FullAnalysisData } from '@/app/actions'; // Updated import
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 
 type ReportDownloadButtonProps = {
-  results: SelectAnalysisToolsOutput;
-  contractIdentifier: string; // Changed from contractUrl
+  results: FullAnalysisData; // Updated to use FullAnalysisData
+  contractIdentifier: string;
 };
 
 export function ReportDownloadButton({ results, contractIdentifier }: ReportDownloadButtonProps) {
   const handleDownload = () => {
     const reportData = {
-      contractIdentifier, // Changed from contractUrl
+      contractIdentifier,
       analysisTimestamp: new Date().toISOString(),
       aiSelectedTools: results.selectedTools,
-      // In a real app, you'd include actual vulnerability details here
-      simulatedVulnerabilities: [
-        {
-          id: 'vuln-001',
-          title: 'Reentrancy Possibility',
-          severity: 'High',
-          description: 'A potential reentrancy vulnerability detected in the `withdraw` function. External calls before state updates can lead to exploits.',
-          tool: 'Slither (Simulated)',
-        },
-        {
-          id: 'vuln-002',
-          title: 'Integer Overflow/Underflow',
-          severity: 'Medium',
-          description: 'The `transfer` function might be susceptible to integer overflow if extremely large amounts are processed without proper checks.',
-          tool: 'Mythril (Simulated)',
-        }
-      ],
-      summary: "This is an automated preliminary analysis. Further manual review and professional auditing are recommended for critical applications."
+      reportedVulnerabilities: results.vulnerabilities, // Use real vulnerabilities
+      summary: "This is an AI-generated preliminary analysis. Further manual review and professional auditing are recommended for critical applications."
     };
 
     const jsonString = JSON.stringify(reportData, null, 2);
@@ -41,7 +25,9 @@ export function ReportDownloadButton({ results, contractIdentifier }: ReportDown
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `auditlens_report_${new Date().toISOString().split('T')[0]}.json`;
+    // Make filename more specific if possible, or keep generic
+    const safeIdentifier = contractIdentifier.replace(/[^a-zA-Z0-9_.-]/g, '_').substring(0, 50);
+    a.download = `auditlens_report_${safeIdentifier}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

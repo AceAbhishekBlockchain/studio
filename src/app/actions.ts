@@ -2,11 +2,21 @@
 'use server';
 
 import { selectAnalysisTools, type SelectAnalysisToolsOutput } from '@/ai/flows/select-analysis-tools';
+import { generateVulnerabilityReport, type GenerateVulnerabilityReportOutput, type Vulnerability } from '@/ai/flows/generate-vulnerability-report';
 import { z } from 'zod';
 
-// Updated to reflect different types of identifiers
+// Re-export Vulnerability type for use in page components
+export type { Vulnerability } from '@/ai/flows/generate-vulnerability-report';
+
+// Define the structure for the full analysis data
+export type FullAnalysisData = {
+  selectedTools: string[];
+  vulnerabilities: Vulnerability[];
+};
+
+// Updated AnalysisResult type
 export type AnalysisResult = 
-  | { success: true; data: SelectAnalysisToolsOutput; contractIdentifier: string }
+  | { success: true; data: FullAnalysisData; contractIdentifier: string }
   | { success: false; error: string; contractIdentifier: string | null };
 
 // Schema for basic Ethereum address validation
@@ -52,8 +62,6 @@ export async function analyzeContractAction(
       }
       contractIdentifier = validationResult.data;
       // Placeholder for fetching code by address
-      // In a real scenario, you'd call a service here:
-      // smartContractCode = await fetchCodeFromAddress(contractAddress);
       return { success: false, error: `Fetching code for address ${contractIdentifier} is not yet implemented. This feature is coming soon!`, contractIdentifier };
     } else {
       return { success: false, error: 'Invalid input type selected.', contractIdentifier: null };
@@ -63,10 +71,33 @@ export async function analyzeContractAction(
         throw new Error('Fetched or provided contract code is empty.');
     }
 
-    // Call the AI flow to select analysis tools
-    const analysisOutput = await selectAnalysisTools({ smartContractCode });
+    // Step 1: Call the AI flow to select analysis tools
+    const toolSelectionOutput: SelectAnalysisToolsOutput = await selectAnalysisTools({ smartContractCode });
 
-    return { success: true, data: analysisOutput, contractIdentifier: contractIdentifier as string };
+    if (!toolSelectionOutput || !toolSelectionOutput.selectedTools) {
+        throw new Error('AI tool selection failed or returned no tools.');
+    }
+    
+    // Step 2: Call the AI flow to generate vulnerability report
+    const vulnerabilityReportOutput: GenerateVulnerabilityReportOutput = await generateVulnerabilityReport({
+      smartContractCode,
+      selectedTools: toolSelectionOutput.selectedTools,
+    });
+
+    if (!vulnerabilityReportOutput || !vulnerabilityReportOutput.vulnerabilities) {
+        // Even an empty array is a valid response, but null/undefined output is an error.
+        throw new Error('AI vulnerability report generation failed.');
+    }
+    
+    return { 
+      success: true, 
+      data: {
+        selectedTools: toolSelectionOutput.selectedTools,
+        vulnerabilities: vulnerabilityReportOutput.vulnerabilities,
+      }, 
+      contractIdentifier: contractIdentifier as string 
+    };
+
   } catch (err) {
     console.error('Error analyzing contract:', err);
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during analysis.';

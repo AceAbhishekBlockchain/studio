@@ -3,25 +3,23 @@
 
 import * as React from 'react';
 import { useActionState } from 'react';
-import { z } from 'zod';
+// No need to import z from Zod here as form schema is in CodeSubmissionForm
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 import { Header } from '@/components/Header';
 import { CodeSubmissionForm, type CodeSubmissionFormValues } from '@/components/CodeSubmissionForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { ReportDownloadButton } from '@/components/ReportDownloadButton';
-import { analyzeContractAction, type AnalysisResult } from './actions';
+import { analyzeContractAction, type AnalysisResult, type FullAnalysisData } from './actions'; // Updated import for FullAnalysisData
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
-
-// Form schema is now primarily managed within CodeSubmissionForm.tsx
-// This page component doesn't need a separate formSchema for validation itself.
 
 export default function Home() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  // analysisResult now expects its 'data' property to be FullAnalysisData on success
   const [analysisResult, setAnalysisResult] = React.useState<AnalysisResult | null>(null);
-  const [submittedIdentifier, setSubmittedIdentifier] = React.useState<string | null>(null); // Renamed from submittedUrl
+  const [submittedIdentifier, setSubmittedIdentifier] = React.useState<string | null>(null);
 
 
   const initialState: AnalysisResult | null = null;
@@ -29,7 +27,7 @@ export default function Home() {
 
   const handleFormSubmit = (values: CodeSubmissionFormValues) => {
     setIsLoading(true);
-    setAnalysisResult(null); // Clear previous results
+    setAnalysisResult(null); 
     
     const formData = new FormData();
     formData.append('inputType', values.inputType);
@@ -40,7 +38,7 @@ export default function Home() {
       formData.append('contractUrl', values.contractUrl);
       identifier = values.contractUrl;
     } else if (values.inputType === 'file' && values.contractFile && values.contractFile.length > 0) {
-      formData.append('contractFile', values.contractFile[0]); // Append the File object
+      formData.append('contractFile', values.contractFile[0]); 
       identifier = values.contractFile[0].name;
     } else if (values.inputType === 'address' && values.contractAddress) {
       formData.append('contractAddress', values.contractAddress);
