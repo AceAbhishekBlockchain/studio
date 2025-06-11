@@ -27,7 +27,7 @@ export default function Home() {
   const initialState: AnalysisResult | null = null;
   const [formState, formAction] = useActionState(analyzeContractAction, initialState);
 
-  const handleFormSubmit = async (values: CodeSubmissionFormValues) => {
+  const handleFormSubmit = (values: CodeSubmissionFormValues) => {
     setIsLoading(true);
     setAnalysisResult(null); // Clear previous results
     
@@ -48,7 +48,9 @@ export default function Home() {
     }
     setSubmittedIdentifier(identifier);
     
-    await formAction(formData); 
+    React.startTransition(() => {
+      formAction(formData); 
+    });
   };
   
   React.useEffect(() => {

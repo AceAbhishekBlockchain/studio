@@ -10,7 +10,7 @@
  * - SelectAnalysisToolsOutput - The return type for the selectAnalysisTools function, listing the selected analysis tools.
  */
 
-import {ai} from '@/ai/genkit';
+import { initializeGenkit } from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SelectAnalysisToolsInputSchema = z.object({
@@ -27,7 +27,9 @@ export async function selectAnalysisTools(input: SelectAnalysisToolsInput): Prom
   return selectAnalysisToolsFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const genkit = await initializeGenkit();
+
+const prompt = genkit.definePrompt({
   name: 'selectAnalysisToolsPrompt',
   input: {
     schema: SelectAnalysisToolsInputSchema,
@@ -52,7 +54,7 @@ const prompt = ai.definePrompt({
 `,
 });
 
-const selectAnalysisToolsFlow = ai.defineFlow(
+const selectAnalysisToolsFlow = genkit.defineFlow(
   {
     name: 'selectAnalysisToolsFlow',
     inputSchema: SelectAnalysisToolsInputSchema,

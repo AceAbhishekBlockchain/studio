@@ -21,11 +21,13 @@ if (!geminiApiKey) {
   throw new Error(errorMessage);
 }
 
-export const ai = genkit({
-  plugins: [
-    googleAI({
-      apiKey: geminiApiKey,
-    }),
-  ],
-  model: 'googleai/gemini-2.0-flash',
-});
+export async function initializeGenkit() {
+  return genkit({
+    plugins: [
+      googleAI({
+        apiKey: geminiApiKey,
+      }),
+    ],
+    model: 'googleai/gemini-2.0-flash',
+  });
+}
