@@ -1,0 +1,58 @@
+
+image: node:20 # Use a Node.js image compatible with your project
+
+stages:
+  - build
+  - test
+  # - deploy # Deployment stage often requires more setup and secrets
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG} # Cache per branch
+  paths:
+    - node_modules/
+    - .next/cache/
+
+before_script:
+  - npm install --legacy-peer-deps # Install dependencies
+
+build_app:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - .next/
+      - public/
+      - next.config.ts
+      - package.json
+      - apphosting.yaml # Important for Firebase App Hosting deployment
+      - tsconfig.json
+    expire_in: 1 week # Keep artifacts for 1 week
+
+test_app:
+  stage: test
+  script:
+    - npm run lint
+    - npm run typecheck
+    # If you add a dedicated test script like "npm run test", add it here.
+  dependencies: [] # Linting and typechecking can run independently of build artifacts
+
+# --- Example Deployment to Firebase App Hosting ---
+# This is a basic example. You'll need to configure Firebase authentication
+# (e.g., using FIREBASE_TOKEN) and specify your project/backend IDs in GitLab CI/CD variables.
+
+# deploy_to_firebase_app_hosting:
+#   stage: deploy
+#   image: firebase/firebase-tools:latest # Use the official Firebase image
+#   script:
+#     # Ensure FIREBASE_TOKEN, FIREBASE_PROJECT_ID, and APP_HOSTING_BACKEND_ID are set as CI/CD variables in GitLab
+#     - echo "Attempting to deploy to Firebase App Hosting..."
+#     - firebase projects:list # Optional: verify authentication
+#     # The following command assumes your apphosting.yaml is configured correctly
+#     # and you are deploying the backend defined there.
+#     - firebase apphosting:backends:deploy ${APP_HOSTING_BACKEND_ID} --project ${FIREBASE_PROJECT_ID} --token ${FIREBASE_TOKEN} --source .
+#   dependencies:
+#     - build_app # Depends on the build artifacts
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Deploy only from the default branch (e.g., main or master)
+#       when: manual # Or 'on_success' for automatic deployment

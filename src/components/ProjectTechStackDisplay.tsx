@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListTree, Brain, Palette, LayoutGrid, PlugZap, Server, FileCode, ShieldCheck, Database } from 'lucide-react';
+import { ListTree, Brain, Palette, LayoutGrid, PlugZap, Server, FileCode, ShieldCheck, Database, GitFork } from 'lucide-react';
 
 const technologies = [
   {
@@ -45,7 +45,7 @@ const technologies = [
     name: 'Zod',
     description: 'A TypeScript-first schema declaration and validation library. Used for validating form inputs and the schemas for AI flow inputs/outputs.',
     role: 'Ensures data integrity for form submissions (e.g., URLs, contract addresses) and the data structures exchanged with Genkit AI flows.',
-    icon: <ShieldCheck className="h-6 w-6 text-green-500" /> 
+    icon: <ShieldCheck className="h-6 w-6 text-green-500" />
   },
    {
     name: 'Lucide Icons',
@@ -62,8 +62,14 @@ const technologies = [
   {
     name: 'MongoDB Atlas',
     description: 'A fully managed cloud database service. Planned for persisting data such as analysis reports or user information.',
-    role: 'Data storage and persistence (integration pending).',
+    role: 'Data storage and persistence (initial setup complete, further integration pending).',
     icon: <Database className="h-6 w-6 text-green-600" />
+  },
+  {
+    name: 'GitLab CI/CD',
+    description: 'A continuous integration and continuous delivery/deployment platform built into GitLab.',
+    role: 'Automates the build, test, and deployment pipeline for the application (initial .gitlab-ci.yml setup).',
+    icon: <GitFork className="h-6 w-6 text-orange-600" /> // Using GitFork icon for CI/CD
   }
 ];
 
@@ -91,7 +97,7 @@ export function ProjectTechStackDisplay() {
               <CardContent className="flex-grow space-y-2">
                 <p className="text-sm text-muted-foreground">{tech.description}</p>
                 <p className="text-sm">
-                  <strong className="font-medium text-foreground">Role in Project:</strong> 
+                  <strong className="font-medium text-foreground">Role in Project:</strong>
                   <span className="text-muted-foreground ml-1">{tech.role}</span>
                 </p>
               </CardContent>
@@ -99,7 +105,7 @@ export function ProjectTechStackDisplay() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground pt-4 border-t border-border mt-6">
-          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform.
+          These technologies work in concert, leveraging server components, server actions, and AI flows to deliver the smart contract auditing and analysis capabilities of the AceAbhishek platform. The CI/CD pipeline helps ensure code quality and automates deployments.
         </p>
       </CardContent>
     </Card>
