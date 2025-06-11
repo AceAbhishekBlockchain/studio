@@ -3,9 +3,9 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Send, FileText, LinkIcon, SearchCode, Info } from 'lucide-react';
+import { Loader2, Send, FileText, LinkIcon, SearchCode, Cpu } from 'lucide-react'; // Added Cpu icon
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,16 +18,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea'; // Added Textarea
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+// Alert removed as Etherscan is now live, and techQuery will have its own input.
 
 // Updated Zod schema for the form
 const formSchema = z.object({
-  inputType: z.enum(['url', 'file', 'address']).default('url'),
+  inputType: z.enum(['url', 'file', 'address', 'techQuery']).default('url'),
   contractUrl: z.string().optional(),
   contractFile: (typeof window === 'undefined' ? z.any() : z.instanceof(FileList)).optional(),
   contractAddress: z.string().optional(),
+  techQueryCode: z.string().optional(), // For the new textarea
 }).superRefine((data, ctx) => {
   if (data.inputType === 'url') {
     if (!data.contractUrl) {
@@ -37,9 +39,12 @@ const formSchema = z.object({
     }
   } else if (data.inputType === 'file') {
     if (!data.contractFile || data.contractFile.length === 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please upload a .sol file.', path: ['contractFile'] });
-    } else if (data.contractFile && data.contractFile.length > 0 && !data.contractFile[0].name.endsWith('.sol')) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid file type. Only .sol files are accepted.', path: ['contractFile'] });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please upload a .sol or .vy file.', path: ['contractFile'] });
+    } else if (data.contractFile && data.contractFile.length > 0) {
+        const fileName = data.contractFile[0].name;
+        if (!fileName.endsWith('.sol') && !fileName.endsWith('.vy')) {
+             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid file type. Only .sol or .vy files are accepted.', path: ['contractFile'] });
+        }
     }
   } else if (data.inputType === 'address') {
     if (!data.contractAddress || data.contractAddress.trim() === '') {
@@ -47,13 +52,17 @@ const formSchema = z.object({
     } else if (!/^(0x)?[0-9a-fA-F]{40}$/.test(data.contractAddress)) {
        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid contract address format. (e.g., 0x...).', path: ['contractAddress'] });
     }
+  } else if (data.inputType === 'techQuery') {
+    if (!data.techQueryCode || data.techQueryCode.trim().length < 20) { // Basic length check
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please paste sufficient smart contract code (min 20 characters).', path: ['techQueryCode'] });
+    }
   }
 });
 
 export type CodeSubmissionFormValues = z.infer<typeof formSchema>;
 
 type CodeSubmissionFormProps = {
-  onSubmit: (values: CodeSubmissionFormValues) => void; // Changed from Promise<void> as submit is now wrapped in startTransition
+  onSubmit: (values: CodeSubmissionFormValues) => void;
   isLoading: boolean;
 };
 
@@ -65,6 +74,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
       contractUrl: '',
       contractFile: undefined,
       contractAddress: '',
+      techQueryCode: '',
     },
   });
 
@@ -83,12 +93,12 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
               name="inputType"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Submission Method</FormLabel>
+                  <FormLabel>Analysis Type / Input Method</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0"
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                       disabled={isLoading}
                     >
                       <FormItem className="flex items-center space-x-2 space-y-0">
@@ -96,7 +106,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                           <RadioGroupItem value="url" id="url" />
                         </FormControl>
                         <FormLabel htmlFor="url" className="font-normal flex items-center">
-                          <LinkIcon className="mr-2 h-4 w-4 text-muted-foreground" /> URL
+                          <LinkIcon className="mr-2 h-4 w-4 text-muted-foreground" /> URL (Vulnerability Audit)
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
@@ -104,7 +114,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                           <RadioGroupItem value="file" id="file" />
                         </FormControl>
                         <FormLabel htmlFor="file" className="font-normal flex items-center">
-                          <FileText className="mr-2 h-4 w-4 text-muted-foreground" /> File Upload
+                          <FileText className="mr-2 h-4 w-4 text-muted-foreground" /> File Upload (Vulnerability Audit)
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
@@ -112,7 +122,15 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                           <RadioGroupItem value="address" id="address" />
                         </FormControl>
                         <FormLabel htmlFor="address" className="font-normal flex items-center">
-                           <SearchCode className="mr-2 h-4 w-4 text-muted-foreground" /> Contract Address
+                           <SearchCode className="mr-2 h-4 w-4 text-muted-foreground" /> Contract Address (Vulnerability Audit)
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="techQuery" id="techQuery" />
+                        </FormControl>
+                        <FormLabel htmlFor="techQuery" className="font-normal flex items-center">
+                           <Cpu className="mr-2 h-4 w-4 text-muted-foreground" /> Technology Breakdown (Code Paste)
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>
@@ -138,7 +156,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                       />
                     </FormControl>
                     <FormDescription>
-                      Enter the public URL of the smart contract code (e.g., GitHub raw URL).
+                      Enter the public URL of the smart contract code (e.g., GitHub raw URL) for vulnerability audit.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -152,11 +170,11 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                 name="contractFile"
                 render={({ field: { onChange, value, ...restField } }) => (
                   <FormItem>
-                    <FormLabel>Upload .sol File</FormLabel>
+                    <FormLabel>Upload .sol or .vy File</FormLabel>
                     <FormControl>
                       <Input
                         type="file"
-                        accept=".sol"
+                        accept=".sol,.vy"
                         onChange={(e) => onChange(e.target.files)}
                         {...restField}
                         disabled={isLoading}
@@ -164,7 +182,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                       />
                     </FormControl>
                     <FormDescription>
-                      Select a Solidity (.sol) file from your computer.
+                      Select a Solidity (.sol) or Vyper (.vy) file from your computer for vulnerability audit.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -173,29 +191,52 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
             )}
 
             {selectedInputType === 'address' && (
-              
-                <FormField
-                  control={form.control}
-                  name="contractAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contract Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="0x123abc..."
-                          {...field}
-                          value={field.value ?? ""}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Enter the Ethereum mainnet address (e.g., 0x...). Source code will be fetched from Etherscan.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              
+              <FormField
+                control={form.control}
+                name="contractAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract Address (Ethereum Mainnet)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="0x123abc..."
+                        {...field}
+                        value={field.value ?? ""}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter the Ethereum mainnet address. Source code will be fetched from Etherscan for vulnerability audit.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            
+            {selectedInputType === 'techQuery' && (
+              <FormField
+                control={form.control}
+                name="techQueryCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Paste Smart Contract Code</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Paste your smart contract code here..."
+                        className="min-h-[200px] font-code text-sm"
+                        {...field}
+                        value={field.value ?? ""}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Paste the full smart contract code for analysis of technologies used.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
             
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
@@ -207,7 +248,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
               ) : (
                 <>
                   <Send className="mr-2 h-4 w-4" />
-                  Analyze Contract
+                  {selectedInputType === 'techQuery' ? 'Analyze Technologies' : 'Analyze Contract for Vulnerabilities'}
                 </>
               )}
             </Button>

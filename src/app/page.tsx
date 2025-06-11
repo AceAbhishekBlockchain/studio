@@ -3,23 +3,22 @@
 
 import * as React from 'react';
 import { useActionState } from 'react';
-// No need to import z from Zod here as form schema is in CodeSubmissionForm
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 import { Header } from '@/components/Header';
 import { CodeSubmissionForm, type CodeSubmissionFormValues } from '@/components/CodeSubmissionForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { ReportDownloadButton } from '@/components/ReportDownloadButton';
-import { analyzeContractAction, type AnalysisResult, type FullAnalysisData } from './actions'; // Updated import for FullAnalysisData
+import { analyzeContractAction, type AnalysisResult, type VulnerabilityAnalysisData, type TechnologyAnalysisData } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
-  // analysisResult now expects its 'data' property to be FullAnalysisData on success
   const [analysisResult, setAnalysisResult] = React.useState<AnalysisResult | null>(null);
   const [submittedIdentifier, setSubmittedIdentifier] = React.useState<string | null>(null);
+  const [currentAnalysisType, setCurrentAnalysisType] = React.useState<'vulnerability' | 'technology' | null>(null);
 
 
   const initialState: AnalysisResult | null = null;
@@ -28,6 +27,7 @@ export default function Home() {
   const handleFormSubmit = (values: CodeSubmissionFormValues) => {
     setIsLoading(true);
     setAnalysisResult(null); 
+    setCurrentAnalysisType(null);
     
     const formData = new FormData();
     formData.append('inputType', values.inputType);
@@ -37,12 +37,19 @@ export default function Home() {
     if (values.inputType === 'url' && values.contractUrl) {
       formData.append('contractUrl', values.contractUrl);
       identifier = values.contractUrl;
+      setCurrentAnalysisType('vulnerability');
     } else if (values.inputType === 'file' && values.contractFile && values.contractFile.length > 0) {
       formData.append('contractFile', values.contractFile[0]); 
       identifier = values.contractFile[0].name;
+      setCurrentAnalysisType('vulnerability');
     } else if (values.inputType === 'address' && values.contractAddress) {
       formData.append('contractAddress', values.contractAddress);
       identifier = values.contractAddress;
+      setCurrentAnalysisType('vulnerability');
+    } else if (values.inputType === 'techQuery' && values.techQueryCode) {
+      formData.append('techQueryCode', values.techQueryCode);
+      identifier = "Pasted Code for Technology Analysis";
+      setCurrentAnalysisType('technology');
     }
     setSubmittedIdentifier(identifier);
     
@@ -58,14 +65,16 @@ export default function Home() {
       if (formState.success) {
         toast({
           title: "Analysis Complete",
-          description: "Smart contract analysis finished successfully.",
+          description: `Contract ${formState.type} analysis finished successfully.`,
         });
+        setCurrentAnalysisType(formState.type); // Ensure currentAnalysisType is set from formState
       } else {
         toast({
           variant: "destructive",
           title: "Analysis Failed",
           description: formState.error || "An unknown error occurred.",
         });
+        setCurrentAnalysisType(null);
       }
     }
   }, [formState, toast]);
@@ -96,17 +105,26 @@ export default function Home() {
             </Alert>
           )}
 
-          {analysisResult?.success === true && analysisResult.data && submittedIdentifier && (
+          {analysisResult?.success === true && analysisResult.data && submittedIdentifier && currentAnalysisType && (
             <>
-              <ResultsDashboard results={analysisResult.data} contractIdentifier={submittedIdentifier} />
-              <ReportDownloadButton results={analysisResult.data} contractIdentifier={submittedIdentifier} />
+              <ResultsDashboard 
+                analysisData={analysisResult.data as VulnerabilityAnalysisData | TechnologyAnalysisData} 
+                analysisType={currentAnalysisType}
+                contractIdentifier={submittedIdentifier} 
+              />
+              {currentAnalysisType === 'vulnerability' && (
+                <ReportDownloadButton 
+                  results={analysisResult.data as VulnerabilityAnalysisData} 
+                  contractIdentifier={submittedIdentifier} 
+                />
+              )}
             </>
           )}
         </div>
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} AceAbhishek. All rights reserved.</p>
-        <p>AI-powered smart contract auditing.</p>
+        <p>AI-powered smart contract auditing and technology analysis.</p>
       </footer>
     </div>
   );
