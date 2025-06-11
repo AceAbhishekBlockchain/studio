@@ -53,7 +53,7 @@ const formSchema = z.object({
 export type CodeSubmissionFormValues = z.infer<typeof formSchema>;
 
 type CodeSubmissionFormProps = {
-  onSubmit: (values: CodeSubmissionFormValues) => Promise<void>;
+  onSubmit: (values: CodeSubmissionFormValues) => void; // Changed from Promise<void> as submit is now wrapped in startTransition
   isLoading: boolean;
 };
 
@@ -173,7 +173,7 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
             )}
 
             {selectedInputType === 'address' && (
-              <>
+              
                 <FormField
                   control={form.control}
                   name="contractAddress"
@@ -189,22 +189,13 @@ export function CodeSubmissionForm({ onSubmit, isLoading }: CodeSubmissionFormPr
                         />
                       </FormControl>
                       <FormDescription>
-                        Enter the Ethereum mainnet address (e.g., 0x...).
+                        Enter the Ethereum mainnet address (e.g., 0x...). Source code will be fetched from Etherscan.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Alert variant="default" className="mt-4">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle className="font-semibold">Illustrative Feature</AlertTitle>
-                  <AlertDescription>
-                    Analysis via contract address is currently for demonstration purposes.
-                    Live code fetching and full analysis for addresses will be implemented in a future update.
-                    Submitting an address will currently show the UI flow.
-                  </AlertDescription>
-                </Alert>
-              </>
+              
             )}
             
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
