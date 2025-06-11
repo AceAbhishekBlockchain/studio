@@ -27,7 +27,7 @@ export function ReportDownloadButton({ results, contractIdentifier }: ReportDown
     a.href = url;
     // Make filename more specific if possible, or keep generic
     const safeIdentifier = contractIdentifier.replace(/[^a-zA-Z0-9_.-]/g, '_').substring(0, 50);
-    a.download = `auditlens_report_${safeIdentifier}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `aceabhishek_report_${safeIdentifier}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

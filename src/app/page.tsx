@@ -105,7 +105,7 @@ export default function Home() {
         </div>
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} AuditLens. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} AceAbhishek. All rights reserved.</p>
         <p>AI-powered smart contract auditing.</p>
       </footer>
     </div>

@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'AuditLens',
-  description: 'Smart Contract Auditing with AI',
+  title: 'AceAbhishek Smart Contract Auditor',
+  description: 'Smart Contract Auditing with AI by AceAbhishek',
 };
 
 export default function RootLayout({

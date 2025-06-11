@@ -6,7 +6,7 @@ export function Header() {
       <div className="max-w-4xl mx-auto flex items-center space-x-3">
         <ShieldCheck className="h-10 w-10 text-primary" />
         <h1 className="text-4xl font-headline font-bold text-foreground">
-          AuditLens
+          AceAbhishek
         </h1>
       </div>
     </header>
