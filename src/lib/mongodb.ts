@@ -89,4 +89,6 @@ export async function saveAnalysisReport(
 // Optional: Function to gracefully close the connection when the app shuts down
 export async function closeMongoDBConnection() {
   if (cachedClient) {
-    await cachedClient.close
+    await cachedClient.close();
+  }
+}
