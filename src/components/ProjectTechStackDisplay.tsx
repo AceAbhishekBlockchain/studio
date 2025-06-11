@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListTree, Brain, Palette, LayoutGrid, PlugZap, Server, FileCode, ShieldCheck } from 'lucide-react'; // Changed CheckShield to ShieldCheck
+import { ListTree, Brain, Palette, LayoutGrid, PlugZap, Server, FileCode, ShieldCheck, Database } from 'lucide-react';
 
 const technologies = [
   {
@@ -58,6 +58,12 @@ const technologies = [
     description: 'An API service that provides access to Ethereum blockchain data, including verified smart contract source code.',
     role: 'Used to fetch smart contract source code when a user provides a contract address for analysis.',
     icon: <Server className="h-6 w-6 text-gray-500" />
+  },
+  {
+    name: 'MongoDB Atlas',
+    description: 'A fully managed cloud database service. Planned for persisting data such as analysis reports or user information.',
+    role: 'Data storage and persistence (integration pending).',
+    icon: <Database className="h-6 w-6 text-green-600" />
   }
 ];
 
