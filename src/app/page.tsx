@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react'; // Changed from 'react-dom' and renamed
 import { z } from 'zod';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
@@ -27,8 +27,8 @@ export default function Home() {
 
   const initialState: AnalysisResult | null = null;
   // We use a local handler to manage loading state around the form action.
-  // The formState from useFormState will reflect the result of the action.
-  const [formState, formAction] = useFormState(analyzeContractAction, initialState);
+  // The formState from useActionState will reflect the result of the action.
+  const [formState, formAction] = useActionState(analyzeContractAction, initialState); // Changed from useFormState
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -38,10 +38,10 @@ export default function Home() {
     const formData = new FormData();
     formData.append('contractUrl', values.contractUrl);
     
-    // Directly call formAction, which is `analyzeContractAction` bound with `useFormState`
+    // Directly call formAction, which is `analyzeContractAction` bound with `useActionState`
     // This will update `formState` when the action completes.
     await formAction(formData); 
-    // No need to call analyzeContractAction directly here, useFormState handles it.
+    // No need to call analyzeContractAction directly here, useActionState handles it.
   };
   
   React.useEffect(() => {
